@@ -1,193 +1,150 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
-<meta charset="UTF-8">
-<title>残業手当計算ツール</title>
-<link rel="manifest" href="manifest.json">
-
-<style>
-  body {
-    font-family: sans-serif;
-    margin: 0;
-    background: #f5f5f5;
-  }
-
-  header {
-    background: #0078d4;
-    color: white;
-    padding: 15px;
-    text-align: center;
-    font-size: 1.4em;
-  }
-
-  footer {
-    background: #0078d4;
-    color: white;
-    padding: 10px;
-    text-align: center;
-    font-size: 0.9em;
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-  }
-
-  .container {
-    padding: 20px;
-    max-width: 600px;
-    margin: auto;
-  }
-
-  input {
-    width: 100%;
-    padding: 12px;
-    margin: 8px 0;
-    font-size: 1.1em;
-    box-sizing: border-box;
-  }
-
-  button {
-    width: 100%;
-    padding: 14px;
-    font-size: 1.2em;
-    background: #0078d4;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    margin-top: 15px;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-  }
-
-  th, td {
-    border: 1px solid #666;
-    padding: 10px;
-  }
-
-  th {
-    background: #eee;
-  }
-</style>
-</head>
-<body>
-
-<header>残業手当計算ツール</header>
-
-<div class="container">
-
-<h3>■ 基礎賃金（月額）</h3>
-
-<label>俸給</label>
-<input id="salary" type="number">
-
-<label>勤続・職能手当</label>
-<input id="skill" type="number">
-
-<label>扶養手当（調整手当の計算に使用）</label>
-<input id="family" type="number">
-
-<label>役職手当</label>
-<input id="position" type="number">
-
-<h3>■ 年間所定労働時間数</h3>
-<input id="annualHours" type="number" placeholder="例：2000">
-
-<h3>■ 残業時間</h3>
-
-<label>割増 0% の残業時間（h）</label>
-<input id="hours0" type="number">
-
-<label>割増 25% の残業時間（h）</label>
-<input id="hours25" type="number">
-
-<button onclick="calc()">計算する</button>
-
-<div id="result"></div>
-
-</div>
-
-<footer>© 残業手当計算ツール</footer>
-
-<script>
-// 入力項目一覧
-const fields = [
-  "salary", "skill", "family", "position",
-  "annualHours", "hours0", "hours25"
-];
-
-// ページ読み込み時に localStorage から復元
-window.onload = () => {
-  fields.forEach(id => {
-    const saved = localStorage.getItem(id);
-    if (saved !== null) {
-      document.getElementById(id).value = saved;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>残業手当計算ツール</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    :root {
+      --primary: #2563eb;
+      --bg: #f3f4f6;
+      --card: #fff
     }
-  });
-};
 
-// 入力が変わったら自動保存
-fields.forEach(id => {
-  document.getElementById(id).addEventListener("input", () => {
-    localStorage.setItem(id, document.getElementById(id).value);
-  });
-});
+    * {
+      box-sizing: border-box
+    }
 
-function calc() {
-  const salary = Number(document.getElementById("salary").value);
-  const skill = Number(document.getElementById("skill").value);
-  const family = Number(document.getElementById("family").value);
-  const position = Number(document.getElementById("position").value);
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      padding-bottom: calc(24px + env(safe-area-inset-bottom))
+    }
 
-  const annualHours = Number(document.getElementById("annualHours").value);
+    header,
+    footer {
+      background: var(--primary);
+      color: #fff;
+      text-align: center;
+      padding: 16px
+    }
 
-  const hours0 = Number(document.getElementById("hours0").value);
-  const hours25 = Number(document.getElementById("hours25").value);
+    .container {
+      max-width: 680px;
+      margin: auto;
+      padding: 16px
+    }
 
-  // 調整手当（自動計算）
-  const adjust = (salary + skill + family) * 0.1;
+    .card {
+      background: var(--card);
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
+      margin-bottom: 16px
+    }
 
-  // 基礎賃金（月額）
-  const base = salary + adjust + skill + position;
+    label {
+      display: block;
+      margin-top: 12px;
+      font-weight: 600
+    }
 
-  // 時給換算
-  const hourly = (base * 12) / annualHours;
+    input {
+      width: 100%;
+      height: 52px;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px
+    }
 
-  // 割増 0%
-  const overtime0 = hourly * hours0;
+    button {
+      width: 100%;
+      height: 56px;
+      margin-top: 18px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: bold
+    }
 
-  // 割増 25%
-  const overtime25 = hourly * hours25 * 1.25;
+    button:active {
+      opacity: .85
+    }
 
-  // 合計
-  const total = overtime0 + overtime25;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      display: block;
+      overflow-x: auto
+    }
 
-  // 表形式で表示
-  document.getElementById("result").innerHTML = `
-    <h2>計算結果</h2>
-    <table>
-      <tr><th>項目</th><th>金額 / 時間</th></tr>
-      <tr><td>俸給</td><td>${salary.toLocaleString()} 円</td></tr>
-      <tr><td>勤続・職能手当</td><td>${skill.toLocaleString()} 円</td></tr>
-      <tr><td>扶養手当</td><td>${family.toLocaleString()} 円</td></tr>
-      <tr><td>役職手当</td><td>${position.toLocaleString()} 円</td></tr>
-      <tr><td>調整手当（自動計算）</td><td>${Math.round(adjust).toLocaleString()} 円</td></tr>
-      <tr><th>基礎賃金（月額）</th><th>${Math.round(base).toLocaleString()} 円</th></tr>
-      <tr><td>時給換算額</td><td>${hourly.toFixed(2)} 円</td></tr>
-      <tr><td>割増 0% 残業 (${hours0} h)</td><td>${Math.round(overtime0).toLocaleString()} 円</td></tr>
-      <tr><td>割増 25% 残業 (${hours25} h)</td><td>${Math.round(overtime25).toLocaleString()} 円</td></tr>
-      <tr><th>総残業手当</th><th>${Math.round(total).toLocaleString()} 円</th></tr>
-    </table>
-  `;
-}
+    th,
+    td {
+      border: 1px solid #bbb;
+      padding: 10px
+    }
 
-// PWA Service Worker 登録
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js");
-}
-</script>
+    th {
+      background: #eef4ff
+    }
 
+    #result {
+      margin-top: 20px
+    }
+
+    .total {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: var(--primary)
+    }
+  </style>
+</head>
+
+<body>
+  <header>残業手当計算ツール</header>
+  <div class="container">
+    <div class="card">
+      <h3>基礎賃金（月額）</h3>
+      <label>俸給</label><input id="salary" type="number" inputmode="numeric">
+      <label>勤続・職能手当</label><input id="skill" type="number" inputmode="numeric">
+      <label>扶養手当</label><input id="family" type="number" inputmode="numeric">
+      <label>役職手当</label><input id="position" type="number" inputmode="numeric">
+      <h3>年間所定労働時間数</h3>
+      <input id="annualHours" type="number" inputmode="numeric" placeholder="例:2000">
+      <h3>残業時間</h3>
+      <label>割増0%</label><input id="hours0" type="number" inputmode="decimal">
+      <label>割増25%</label><input id="hours25" type="number" inputmode="decimal">
+      <button onclick="calc()">計算する</button>
+      <div id="result"></div>
+    </div>
+  </div>
+  <footer>© 残業手当計算ツール</footer>
+  <script>
+    const fields = ["salary", "skill", "family", "position", "annualHours", "hours0", "hours25"];
+    window.onload = () => fields.forEach(id => { let v = localStorage.getItem(id); if (v !== null) document.getElementById(id).value = v; });
+    fields.forEach(id => document.getElementById(id).addEventListener("input", e => localStorage.setItem(id, e.target.value)));
+    function calc() {
+      const n = id => Number(document.getElementById(id).value) || 0;
+      const salary = n("salary"), skill = n("skill"), family = n("family"), position = n("position"), annual = n("annualHours"), h0 = n("hours0"), h25 = n("hours25");
+      const adjust = (salary + skill + family) * 0.1, base = salary + adjust + skill + position, hourly = annual ? base * 12 / annual : 0;
+      const o0 = hourly * h0, o25 = hourly * h25 * 1.25, total = o0 + o25;
+      result.innerHTML = `<h2>計算結果</h2><p class="total">総残業手当 ${Math.round(total).toLocaleString()} 円</p>
+<table><tr><th>項目</th><th>値</th></tr>
+<tr><td>調整手当</td><td>${Math.round(adjust).toLocaleString()} 円</td></tr>
+<tr><td>基礎賃金</td><td>${Math.round(base).toLocaleString()} 円</td></tr>
+<tr><td>時給</td><td>${hourly.toFixed(2)} 円</td></tr>
+<tr><td>割増0%</td><td>${Math.round(o0).toLocaleString()} 円</td></tr>
+<tr><td>割増25%</td><td>${Math.round(o25).toLocaleString()} 円</td></tr></table>`;
+      result.scrollIntoView({ behavior: "smooth" });
+    }
+    if ("serviceWorker" in navigator) { navigator.serviceWorker.register("service-worker.js"); }
+  </script>
 </body>
+
 </html>
