@@ -21,7 +21,8 @@
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: var(--bg);
-      padding-bottom: calc(24px + env(safe-area-inset-bottom))
+      font-size: 14px;
+      padding-bottom: env(safe-area-inset-bottom);
     }
 
     header,
@@ -29,42 +30,56 @@
       background: var(--primary);
       color: #fff;
       text-align: center;
-      padding: 16px
+      padding: 8px;
     }
 
     .container {
-      max-width: 680px;
+      max-width: 480px;
       margin: auto;
-      padding: 16px
+      padding: 8px;
     }
 
     .card {
       background: var(--card);
-      padding: 16px;
+      padding: 12px;
       border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
-      margin-bottom: 16px
+    }
+
+    h3 {
+      margin: 8px 0 4px;
+      font-size: 14px;
+      border-left: 4px solid var(--primary);
+      padding-left: 8px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
     }
 
     label {
       display: block;
-      margin-top: 12px;
-      font-weight: 600
+      margin-bottom: 2px;
+      font-size: 11px;
+      color: #666;
+      font-weight: 600;
     }
 
     input {
       width: 100%;
-      height: 52px;
-      padding: 12px;
+      height: 40px;
+      padding: 8px;
       font-size: 16px;
       border: 1px solid #ccc;
-      border-radius: 8px
+      border-radius: 8px;
     }
 
     button {
       width: 100%;
-      height: 56px;
-      margin-top: 18px;
+      height: 48px;
+      margin-top: 12px;
       background: var(--primary);
       color: #fff;
       border: none;
@@ -77,31 +92,61 @@
       opacity: .85
     }
 
+    /* Modal styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, .5);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: #fff;
+      padding: 16px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 360px;
+      position: relative;
+    }
+
+    .close {
+      position: absolute;
+      right: 12px;
+      top: 8px;
+      font-size: 24px;
+      cursor: pointer;
+      color: #999;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      display: block;
-      overflow-x: auto
+      margin-top: 8px;
     }
 
     th,
     td {
-      border: 1px solid #bbb;
-      padding: 10px
+      border: 1px solid #eee;
+      padding: 8px;
+      font-size: 13px;
     }
 
     th {
-      background: #eef4ff
+      background: #f8faff;
+      text-align: left;
     }
 
-    #result {
-      margin-top: 20px
-    }
-
-    .total {
+    #result-total {
       font-size: 1.4rem;
       font-weight: bold;
-      color: var(--primary)
+      color: var(--primary);
+      margin: 8px 0;
     }
   </style>
 </head>
@@ -111,37 +156,58 @@
   <div class="container">
     <div class="card">
       <h3>基礎賃金（月額）</h3>
-      <label>俸給</label><input id="salary" type="number" inputmode="numeric">
-      <label>勤続・職能手当</label><input id="skill" type="number" inputmode="numeric">
-      <label>扶養手当</label><input id="family" type="number" inputmode="numeric">
-      <label>役職手当</label><input id="position" type="number" inputmode="numeric">
+      <div class="grid">
+        <div><label>俸給</label><input id="salary" type="number" inputmode="numeric"></div>
+        <div><label>勤続・職能</label><input id="skill" type="number" inputmode="numeric"></div>
+        <div><label>扶養手当</label><input id="family" type="number" inputmode="numeric"></div>
+        <div><label>役職手当</label><input id="position" type="number" inputmode="numeric"></div>
+      </div>
       <h3>年間所定労働時間数</h3>
       <input id="annualHours" type="number" inputmode="numeric" placeholder="例:2000">
       <h3>残業時間</h3>
-      <label>割増0%</label><input id="hours0" type="number" inputmode="decimal">
-      <label>割増25%</label><input id="hours25" type="number" inputmode="decimal">
+      <div class="grid">
+        <div><label>割増0%</label><input id="hours0" type="number" inputmode="decimal"></div>
+        <div><label>割増25%</label><input id="hours25" type="number" inputmode="decimal"></div>
+      </div>
       <button onclick="calc()">計算する</button>
-      <div id="result"></div>
     </div>
   </div>
-  <footer>© 残業手当計算ツール</footer>
+  <footer style="margin-top: 8px;">© 残業手当計算ツール</footer>
+
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <h3>計算結果</h3>
+      <div id="result-total"></div>
+      <div id="result-details"></div>
+    </div>
+  </div>
+
   <script>
     const fields = ["salary", "skill", "family", "position", "annualHours", "hours0", "hours25"];
     window.onload = () => fields.forEach(id => { let v = localStorage.getItem(id); if (v !== null) document.getElementById(id).value = v; });
     fields.forEach(id => document.getElementById(id).addEventListener("input", e => localStorage.setItem(id, e.target.value)));
+
+    function closeModal() {
+      document.getElementById('modal').style.display = 'none';
+    }
+
     function calc() {
       const n = id => Number(document.getElementById(id).value) || 0;
       const salary = n("salary"), skill = n("skill"), family = n("family"), position = n("position"), annual = n("annualHours"), h0 = n("hours0"), h25 = n("hours25");
       const adjust = (salary + skill + family) * 0.1, base = salary + adjust + skill + position, hourly = annual ? base * 12 / annual : 0;
       const o0 = hourly * h0, o25 = hourly * h25 * 1.25, total = o0 + o25;
-      result.innerHTML = `<h2>計算結果</h2><p class="total">総残業手当 ${Math.round(total).toLocaleString()} 円</p>
+
+      document.getElementById('result-total').innerText = `総残業手当 ${Math.round(total).toLocaleString()} 円`;
+      document.getElementById('result-details').innerHTML = `
 <table><tr><th>項目</th><th>値</th></tr>
 <tr><td>調整手当</td><td>${Math.round(adjust).toLocaleString()} 円</td></tr>
 <tr><td>基礎賃金</td><td>${Math.round(base).toLocaleString()} 円</td></tr>
 <tr><td>時給</td><td>${hourly.toFixed(2)} 円</td></tr>
 <tr><td>割増0%</td><td>${Math.round(o0).toLocaleString()} 円</td></tr>
 <tr><td>割増25%</td><td>${Math.round(o25).toLocaleString()} 円</td></tr></table>`;
-      result.scrollIntoView({ behavior: "smooth" });
+
+      document.getElementById('modal').style.display = 'flex';
     }
     if ("serviceWorker" in navigator) { navigator.serviceWorker.register("service-worker.js"); }
   </script>
