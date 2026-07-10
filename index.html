@@ -23,32 +23,29 @@
       background: var(--bg);
       font-size: 14px;
       padding-bottom: env(safe-area-inset-bottom);
-    }
-
-    header,
-    footer {
-      background: var(--primary);
-      color: #fff;
-      text-align: center;
-      padding: 8px;
+      overflow: hidden; /* Prevent overall page scrolling to ensure single screen fit on mobile */
     }
 
     .container {
       max-width: 480px;
       margin: auto;
-      padding: 8px;
+      padding: 10px 8px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
 
     .card {
       background: var(--card);
-      padding: 12px;
+      padding: 10px 12px;
       border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
     }
 
     h3 {
-      margin: 8px 0 4px;
-      font-size: 14px;
+      margin: 6px 0 4px;
+      font-size: 13px;
       border-left: 4px solid var(--primary);
       padding-left: 8px;
     }
@@ -56,35 +53,35 @@
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 8px;
+      gap: 6px;
     }
 
     label {
       display: block;
-      margin-bottom: 2px;
-      font-size: 11px;
+      margin-bottom: 1px;
+      font-size: 10px;
       color: #666;
       font-weight: 600;
     }
 
     input {
       width: 100%;
-      height: 40px;
-      padding: 8px;
-      font-size: 16px;
+      height: 36px;
+      padding: 6px 8px;
+      font-size: 15px;
       border: 1px solid #ccc;
       border-radius: 8px;
     }
 
     button {
       width: 100%;
-      height: 48px;
-      margin-top: 12px;
+      height: 44px;
+      margin-top: 10px;
       background: var(--primary);
       color: #fff;
       border: none;
       border-radius: 10px;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: bold
     }
 
@@ -202,7 +199,7 @@
 
     .picker-title {
       font-weight: bold;
-      font-size: 16px;
+      font-size: 12px; /* Reduced by approximately 2 sizes from 16px */
       color: #333;
     }
 
@@ -218,14 +215,19 @@
       height: 200px;
       overflow: hidden;
       background: #f8f8f8;
+      touch-action: pan-y; /* Lock touch interaction to vertical axis only to prevent side-to-side drift */
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .picker-items {
       height: 100%;
       overflow-y: scroll;
+      overflow-x: hidden; /* Ensure no horizontal scrolling is possible */
       scroll-snap-type: y mandatory;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
+      touch-action: pan-y;
     }
 
     .picker-items::-webkit-scrollbar {
@@ -247,6 +249,8 @@
       color: #888;
       scroll-snap-align: center;
       transition: color 0.1s, transform 0.1s;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .picker-item.selected {
@@ -284,7 +288,6 @@
 </head>
 
 <body>
-  <header>残業手当計算ツール</header>
   <div class="container">
     <div class="card">
       <h3>基礎賃金（月額）</h3>
@@ -304,7 +307,6 @@
       <button onclick="calc()">計算する</button>
     </div>
   </div>
-  <footer style="margin-top: 8px;">© 残業手当計算ツール</footer>
 
   <div id="modal" class="modal">
     <div class="modal-content">
