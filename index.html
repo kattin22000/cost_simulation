@@ -148,6 +148,138 @@
       color: var(--primary);
       margin: 8px 0;
     }
+
+    /* Picker Modal Styles */
+    .picker-modal {
+      position: fixed;
+      z-index: 200;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      pointer-events: none;
+      transition: background 0.3s ease;
+    }
+
+    .picker-modal.show {
+      background: rgba(0, 0, 0, 0.5);
+      pointer-events: auto;
+    }
+
+    .picker-content {
+      background: #fff;
+      width: 100%;
+      max-width: 480px;
+      border-top-left-radius: 16px;
+      border-top-right-radius: 16px;
+      padding-bottom: env(safe-area-inset-bottom);
+      box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.15);
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .picker-modal.show .picker-content {
+      transform: translateY(0);
+    }
+
+    .picker-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .picker-cancel {
+      color: #666;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .picker-title {
+      font-weight: bold;
+      font-size: 16px;
+      color: #333;
+    }
+
+    .picker-confirm {
+      color: var(--primary);
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .picker-wrapper {
+      position: relative;
+      height: 200px;
+      overflow: hidden;
+      background: #f8f8f8;
+    }
+
+    .picker-items {
+      height: 100%;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .picker-items::-webkit-scrollbar {
+      display: none;
+    }
+
+    .picker-items::before,
+    .picker-items::after {
+      content: '';
+      display: block;
+      height: 80px;
+    }
+
+    .picker-item {
+      height: 40px;
+      line-height: 40px;
+      text-align: center;
+      font-size: 20px;
+      color: #888;
+      scroll-snap-align: center;
+      transition: color 0.1s, transform 0.1s;
+    }
+
+    .picker-item.selected {
+      color: #000;
+      font-weight: bold;
+      transform: scale(1.1);
+    }
+
+    .picker-highlight {
+      position: absolute;
+      top: 80px;
+      left: 0;
+      width: 100%;
+      height: 40px;
+      border-top: 1px solid #ddd;
+      border-bottom: 1px solid #ddd;
+      pointer-events: none;
+      background: rgba(255, 255, 255, 0.4);
+    }
+
+    .picker-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      background: linear-gradient(to bottom,
+        rgba(248, 248, 248, 0.9) 0%,
+        rgba(248, 248, 248, 0) 40%,
+        rgba(248, 248, 248, 0) 60%,
+        rgba(248, 248, 248, 0.9) 100%);
+    }
   </style>
 </head>
 
@@ -163,11 +295,11 @@
         <div><label>役職手当</label><input id="position" type="number" inputmode="numeric"></div>
       </div>
       <h3>年間所定労働時間数</h3>
-      <input id="annualHours" type="number" inputmode="numeric" placeholder="例:2000">
+      <input id="annualHours" type="number" inputmode="numeric" placeholder="例:1708">
       <h3>残業時間</h3>
       <div class="grid">
-        <div><label>割増0%</label><input id="hours0" type="number" inputmode="decimal"></div>
-        <div><label>割増25%</label><input id="hours25" type="number" inputmode="decimal"></div>
+        <div><label>割増0%</label><input id="hours0" type="text" readonly placeholder="0.00" onclick="openPicker('hours0')" style="cursor: pointer;"></div>
+        <div><label>割増25%</label><input id="hours25" type="text" readonly placeholder="0.00" onclick="openPicker('hours25')" style="cursor: pointer;"></div>
       </div>
       <button onclick="calc()">計算する</button>
     </div>
@@ -183,10 +315,50 @@
     </div>
   </div>
 
+  <div id="picker-modal" class="picker-modal" onclick="if(event.target === this) closePicker()">
+    <div class="picker-content">
+      <div class="picker-header">
+        <span class="picker-cancel" onclick="closePicker()">キャンセル</span>
+        <span class="picker-title" id="picker-title">時間設定</span>
+        <span class="picker-confirm" onclick="confirmPicker()">確定</span>
+      </div>
+      <div class="picker-wrapper">
+        <div class="picker-highlight"></div>
+        <div class="picker-items" id="picker-items"></div>
+        <div class="picker-overlay"></div>
+      </div>
+    </div>
+  </div>
+
   <script>
     const fields = ["salary", "skill", "family", "position", "annualHours", "hours0", "hours25"];
-    window.onload = () => fields.forEach(id => { let v = localStorage.getItem(id); if (v !== null) document.getElementById(id).value = v; });
-    fields.forEach(id => document.getElementById(id).addEventListener("input", e => localStorage.setItem(id, e.target.value)));
+
+    window.onload = () => {
+      // Set default values if not present in localStorage (Pattern 1)
+      if (localStorage.getItem("skill") === null) {
+        localStorage.setItem("skill", "25000");
+      }
+      if (localStorage.getItem("annualHours") === null) {
+        localStorage.setItem("annualHours", "1708");
+      }
+
+      fields.forEach(id => {
+        let v = localStorage.getItem(id);
+        if (v !== null) document.getElementById(id).value = v;
+      });
+
+      // Initialize the wheel picker items
+      initPicker();
+    };
+
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener("input", e => {
+          localStorage.setItem(id, e.target.value);
+        });
+      }
+    });
 
     function closeModal() {
       document.getElementById('modal').style.display = 'none';
@@ -209,6 +381,79 @@
 
       document.getElementById('modal').style.display = 'flex';
     }
+
+    // Picker Logic
+    let currentPickerField = "";
+    let currentSelectedIndex = 0;
+
+    function initPicker() {
+      const container = document.getElementById('picker-items');
+      container.innerHTML = "";
+      for (let i = 0; i <= 180; i++) { // 180 * 0.25 = 45.00
+        const val = (i * 0.25).toFixed(2);
+        const div = document.createElement('div');
+        div.className = 'picker-item';
+        div.innerText = val;
+        div.onclick = () => {
+          container.scrollTo({
+            top: i * 40,
+            behavior: 'smooth'
+          });
+        };
+        container.appendChild(div);
+      }
+
+      container.addEventListener('scroll', () => {
+        const index = Math.max(0, Math.min(180, Math.round(container.scrollTop / 40)));
+        if (index !== currentSelectedIndex) {
+          const items = container.querySelectorAll('.picker-item');
+          if (items[currentSelectedIndex]) items[currentSelectedIndex].classList.remove('selected');
+          currentSelectedIndex = index;
+          if (items[currentSelectedIndex]) items[currentSelectedIndex].classList.add('selected');
+        }
+      });
+    }
+
+    function openPicker(fieldId) {
+      currentPickerField = fieldId;
+      const val = Number(document.getElementById(fieldId).value) || 0;
+      const label = fieldId === "hours0" ? "割増0% 時間" : "割増25% 時間";
+      document.getElementById('picker-title').innerText = label;
+
+      const modal = document.getElementById('picker-modal');
+      modal.classList.add('show');
+
+      const targetIndex = Math.max(0, Math.min(180, Math.round(val / 0.25)));
+
+      setTimeout(() => {
+        const container = document.getElementById('picker-items');
+        container.scrollTop = targetIndex * 40;
+        const items = container.querySelectorAll('.picker-item');
+        items.forEach((item, idx) => {
+          if (idx === targetIndex) {
+            item.classList.add('selected');
+          } else {
+            item.classList.remove('selected');
+          }
+        });
+        currentSelectedIndex = targetIndex;
+      }, 50);
+    }
+
+    function closePicker() {
+      document.getElementById('picker-modal').classList.remove('show');
+    }
+
+    function confirmPicker() {
+      const val = (currentSelectedIndex * 0.25).toFixed(2);
+      if (currentPickerField) {
+        const input = document.getElementById(currentPickerField);
+        input.value = val;
+        localStorage.setItem(currentPickerField, val);
+      }
+      closePicker();
+    }
+
     if ("serviceWorker" in navigator) { navigator.serviceWorker.register("service-worker.js"); }
   </script>
 </body>
