@@ -199,7 +199,7 @@
 
     .picker-title {
       font-weight: bold;
-      font-size: 12px; /* Reduced by approximately 2 sizes from 16px */
+      font-size: 11px; /* Slightly reduced for a cleaner look */
       color: #333;
     }
 
@@ -290,26 +290,44 @@
 <body>
   <div class="container">
     <div class="card">
-      <h3>基礎賃金（月額）</h3>
-      <div class="grid">
-        <div><label>俸給</label><input id="salary" type="number" inputmode="numeric"></div>
-        <div><label>勤続・職能</label><input id="skill" type="number" inputmode="numeric"></div>
-        <div><label>扶養手当</label><input id="family" type="number" inputmode="numeric"></div>
-        <div><label>役職手当</label><input id="position" type="number" inputmode="numeric"></div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+        <h3 style="margin: 0; border-left: 4px solid var(--primary); padding-left: 8px; font-size: 14px;">残業手当計算</h3>
+        <button onclick="openSettings()" style="width: auto; height: 28px; margin-top: 0; padding: 0 8px; font-size: 12px; background: #4b5563; border-radius: 6px; display: flex; align-items: center; gap: 4px; justify-content: center; cursor: pointer; color: white;">⚙️ 初期設定</button>
       </div>
-      <h3>年間所定労働時間数</h3>
-      <input id="annualHours" type="number" inputmode="numeric" placeholder="例:1708">
-      <h3>残業時間</h3>
-      <div class="grid">
+
+      <h3 style="margin-top: 12px;">残業時間</h3>
+      <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
         <div><label>割増0%</label><input id="hours0" type="text" readonly placeholder="0.00" onclick="openPicker('hours0')" style="cursor: pointer;"></div>
         <div><label>割増25%</label><input id="hours25" type="text" readonly placeholder="0.00" onclick="openPicker('hours25')" style="cursor: pointer;"></div>
+        <div><label>割増50%</label><input id="hours50" type="text" readonly placeholder="0.00" onclick="openPicker('hours50')" style="cursor: pointer;"></div>
+        <div><label>割増75%</label><input id="hours75" type="text" readonly placeholder="0.00" onclick="openPicker('hours75')" style="cursor: pointer;"></div>
       </div>
       <button onclick="calc()">計算する</button>
     </div>
   </div>
 
+  <div id="settings-modal" class="modal">
+    <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
+      <span class="close" onclick="closeSettings()">&times;</span>
+      <h3 style="margin-top: 0;">初期設定</h3>
+
+      <h3>基礎賃金（月額）</h3>
+      <div class="grid" style="margin-bottom: 10px;">
+        <div><label>俸給</label><input id="salary" type="number" inputmode="numeric"></div>
+        <div><label>勤続・職能</label><input id="skill" type="number" inputmode="numeric"></div>
+        <div><label>扶養手当</label><input id="family" type="number" inputmode="numeric"></div>
+        <div><label>役職手当</label><input id="position" type="number" inputmode="numeric"></div>
+      </div>
+
+      <h3>年間所定労働時間数</h3>
+      <input id="annualHours" type="number" inputmode="numeric" placeholder="例:1708" style="margin-bottom: 12px;">
+
+      <button onclick="closeSettings()" style="margin-top: 8px; background: var(--primary);">閉じる</button>
+    </div>
+  </div>
+
   <div id="modal" class="modal">
-    <div class="modal-content">
+    <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
       <span class="close" onclick="closeModal()">&times;</span>
       <h3>計算結果</h3>
       <div id="result-total"></div>
@@ -333,9 +351,12 @@
   </div>
 
   <script>
-    const fields = ["salary", "skill", "family", "position", "annualHours", "hours0", "hours25"];
+    const fields = ["salary", "skill", "family", "position", "annualHours", "hours0", "hours25", "hours50", "hours75"];
 
     window.onload = () => {
+      // Check if it's the very first launch (e.g. salary is not configured)
+      const isFirstLaunch = localStorage.getItem("salary") === null;
+
       // Set default values if not present in localStorage (Pattern 1)
       if (localStorage.getItem("skill") === null) {
         localStorage.setItem("skill", "25000");
@@ -346,11 +367,19 @@
 
       fields.forEach(id => {
         let v = localStorage.getItem(id);
-        if (v !== null) document.getElementById(id).value = v;
+        if (v !== null) {
+          const el = document.getElementById(id);
+          if (el) el.value = v;
+        }
       });
 
       // Initialize the wheel picker items
       initPicker();
+
+      // Automatically open settings popup on very first launch
+      if (isFirstLaunch) {
+        openSettings();
+      }
     };
 
     fields.forEach(id => {
@@ -362,15 +391,28 @@
       }
     });
 
+    function openSettings() {
+      document.getElementById('settings-modal').style.display = 'flex';
+    }
+
+    function closeSettings() {
+      document.getElementById('settings-modal').style.display = 'none';
+    }
+
     function closeModal() {
       document.getElementById('modal').style.display = 'none';
     }
 
     function calc() {
       const n = id => Number(document.getElementById(id).value) || 0;
-      const salary = n("salary"), skill = n("skill"), family = n("family"), position = n("position"), annual = n("annualHours"), h0 = n("hours0"), h25 = n("hours25");
+      const salary = n("salary"), skill = n("skill"), family = n("family"), position = n("position"), annual = n("annualHours");
+      const h0 = n("hours0"), h25 = n("hours25"), h50 = n("hours50"), h75 = n("hours75");
       const adjust = (salary + skill + family) * 0.1, base = salary + adjust + skill + position, hourly = annual ? base * 12 / annual : 0;
-      const o0 = hourly * h0, o25 = hourly * h25 * 1.25, total = o0 + o25;
+      const o0 = hourly * h0;
+      const o25 = hourly * h25 * 1.25;
+      const o50 = hourly * h50 * 1.50;
+      const o75 = hourly * h75 * 1.75;
+      const total = o0 + o25 + o50 + o75;
 
       document.getElementById('result-total').innerText = `総残業手当 ${Math.round(total).toLocaleString()} 円`;
       document.getElementById('result-details').innerHTML = `
@@ -379,7 +421,9 @@
 <tr><td>基礎賃金</td><td>${Math.round(base).toLocaleString()} 円</td></tr>
 <tr><td>時給</td><td>${hourly.toFixed(2)} 円</td></tr>
 <tr><td>割増0%</td><td>${Math.round(o0).toLocaleString()} 円</td></tr>
-<tr><td>割増25%</td><td>${Math.round(o25).toLocaleString()} 円</td></tr></table>`;
+<tr><td>割増25%</td><td>${Math.round(o25).toLocaleString()} 円</td></tr>
+<tr><td>割増50%</td><td>${Math.round(o50).toLocaleString()} 円</td></tr>
+<tr><td>割増75%</td><td>${Math.round(o75).toLocaleString()} 円</td></tr></table>`;
 
       document.getElementById('modal').style.display = 'flex';
     }
@@ -419,7 +463,13 @@
     function openPicker(fieldId) {
       currentPickerField = fieldId;
       const val = Number(document.getElementById(fieldId).value) || 0;
-      const label = fieldId === "hours0" ? "割増0% 時間" : "割増25% 時間";
+      const labels = {
+        "hours0": "割増0% 時間",
+        "hours25": "割増25% 時間",
+        "hours50": "割増50% 時間",
+        "hours75": "割増75% 時間"
+      };
+      const label = labels[fieldId] || "時間設定";
       document.getElementById('picker-title').innerText = label;
 
       const modal = document.getElementById('picker-modal');
