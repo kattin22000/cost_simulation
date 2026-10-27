@@ -171,6 +171,12 @@
       font-weight: 700;
     }
 
+    td:nth-child(2) {
+      text-align: center;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
     td:last-child {
       text-align: right;
       white-space: nowrap;
@@ -493,27 +499,75 @@
     }
 
     function calc() {
+      const valueOf = id => document.getElementById(id).value.trim();
+      const requiredFields = [
+        { id: "salary", label: "俸給" },
+        { id: "annualHours", label: "年間所定労働時間数" }
+      ];
+
+      for (const field of requiredFields) {
+        if (valueOf(field.id) === "") {
+          alert(field.label + "を入力してください。");
+          openSettings();
+          document.getElementById(field.id).focus();
+          return;
+        }
+      }
+
+      const salary = Number(valueOf("salary"));
+      const skill = valueOf("skill") === "" ? 0 : Number(valueOf("skill"));
+      const family = valueOf("family") === "" ? 0 : Number(valueOf("family"));
+      const position = valueOf("position") === "" ? 0 : Number(valueOf("position"));
+      const annual = Number(valueOf("annualHours"));
+      const wageFields = [
+        { id: "salary", label: "俸給", value: salary },
+        { id: "skill", label: "勤続・職能", value: skill },
+        { id: "family", label: "扶養手当", value: family },
+        { id: "position", label: "役職手当", value: position }
+      ];
+
+      const invalidWage = wageFields.find(field => !Number.isFinite(field.value) || field.value < 0);
+      if (invalidWage) {
+        alert(invalidWage.label + "は0以上の数値を入力してください。");
+        openSettings();
+        document.getElementById(invalidWage.id).focus();
+        return;
+      }
+
+      if (!Number.isFinite(annual) || annual <= 0) {
+        alert("年間所定労働時間数は0より大きい数値を入力してください。");
+        openSettings();
+        document.getElementById("annualHours").focus();
+        return;
+      }
+
       const n = id => Number(document.getElementById(id).value) || 0;
-      const salary = n("salary"), skill = n("skill"), family = n("family"), position = n("position"), annual = n("annualHours");
       const h0 = n("hours0"), h025 = n("hours025"), h25 = n("hours25");
-      const adjust = (salary + skill + family) * 0.1, base = salary + adjust + skill + position, hourly = annual ? base * 12 / annual : 0;
+      const adjust = (salary + skill + family) * 0.1;
+      const base = salary + adjust + skill + position;
+      const hourly = base * 12 / annual;
       const o0 = hourly * h0;
       const o025 = hourly * h025 * 0.25;
       const o25 = hourly * h25 * 1.25;
       const total = o0 + o025 + o25;
+      const totalHours = h0 + h025 + h25;
+      const yen = amount => Math.round(amount).toLocaleString("ja-JP");
+      const hours = amount => amount.toFixed(2);
 
-      document.getElementById('result-total').innerText = `総残業手当 ${Math.round(total).toLocaleString()} 円`;
-      document.getElementById('result-details').innerHTML = `
-<table><tr><th>項目</th><th>値</th></tr>
-<tr><td>調整手当</td><td>${Math.round(adjust).toLocaleString()} 円</td></tr>
-<tr><td>基礎賃金</td><td>${Math.round(base).toLocaleString()} 円</td></tr>
-<tr><td>時給</td><td>${hourly.toFixed(2)} 円</td></tr>
-<tr><td>割増0%</td><td>${Math.round(o0).toLocaleString()} 円</td></tr>
-<tr><td>割増25%（0.25）</td><td>${Math.round(o025).toLocaleString()} 円</td></tr>
-<tr><td>割増25%（1.25）</td><td>${Math.round(o25).toLocaleString()} 円</td></tr>
-</table>`;
+      document.getElementById("result-total").innerText =
+        "総残業手当 " + yen(total) + " 円";
+      document.getElementById("result-details").innerHTML =
+        '<table><thead><tr><th>項目</th><th>時間</th><th>手当額</th></tr></thead><tbody>' +
+        '<tr><td>調整手当</td><td>—</td><td>' + yen(adjust) + ' 円</td></tr>' +
+        '<tr><td>基礎賃金</td><td>—</td><td>' + yen(base) + ' 円</td></tr>' +
+        '<tr><td>時給</td><td>—</td><td>' + hourly.toFixed(2) + ' 円</td></tr>' +
+        '<tr><td>割増0%</td><td>' + hours(h0) + '</td><td>' + yen(o0) + ' 円</td></tr>' +
+        '<tr><td>割増25%（0.25）</td><td>' + hours(h025) + '</td><td>' + yen(o025) + ' 円</td></tr>' +
+        '<tr><td>割増25%（1.25）</td><td>' + hours(h25) + '</td><td>' + yen(o25) + ' 円</td></tr>' +
+        '<tr><th>合計</th><th>' + hours(totalHours) + '</th><th>' + yen(total) + ' 円</th></tr>' +
+        '</tbody></table>';
 
-      document.getElementById('modal').style.display = 'flex';
+      document.getElementById("modal").style.display = "flex";
     }
 
     // Picker Logic
