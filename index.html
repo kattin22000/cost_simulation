@@ -184,10 +184,52 @@
     }
 
     #result-total {
-      font-size: 1.4rem;
-      font-weight: bold;
+      font-size: 1.5rem;
+      font-weight: 800;
       color: var(--primary);
-      margin: 8px 0;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      padding: 12px;
+      margin: 10px 0;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #result-details table tbody tr:last-child th {
+      background: #eff6ff;
+      border-top: 2px solid #93c5fd;
+      font-weight: 800;
+    }
+
+    #result-details table tbody tr:last-child th:nth-child(2) {
+      text-align: center;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #result-details table tbody tr:last-child th:last-child {
+      text-align: right;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .result-note {
+      margin: 10px 0 0;
+      color: #555;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 390px) {
+      #result-total {
+        font-size: 1.3rem;
+        padding: 10px 8px;
+      }
+
+      .result-note {
+        font-size: 12px;
+      }
     }
 
     /* Picker Modal Styles */
@@ -565,7 +607,8 @@
         '<tr><td>割増25%（0.25）</td><td>' + hours(h025) + '</td><td>' + yen(o025) + ' 円</td></tr>' +
         '<tr><td>割増25%（1.25）</td><td>' + hours(h25) + '</td><td>' + yen(o25) + ' 円</td></tr>' +
         '<tr><th>合計</th><th>' + hours(totalHours) + '</th><th>' + yen(total) + ' 円</th></tr>' +
-        '</tbody></table>';
+        '</tbody></table>' +
+        '<p class="result-note">金額は1円単位に四捨五入して表示しています。割増25%（0.25）は時給×時間×0.25、割増25%（1.25）は時給×時間×1.25で計算しています。</p>';
 
       document.getElementById("modal").style.display = "flex";
     }
