@@ -450,13 +450,13 @@
 
       <h3>基礎賃金（月額）</h3>
       <div class="grid" style="margin-bottom: 10px;">
-        <div><label>俸給</label><input id="salary" type="number" inputmode="numeric"></div>
-        <div><label>勤続・職能</label><input id="skill" type="number" inputmode="numeric"></div>
+        <div><label>基本給</label><input id="salary" type="number" inputmode="numeric"></div>
+        <div><label>職能給・勤続給</label><input id="skill" type="number" inputmode="numeric"></div>
         <div><label>扶養手当</label><input id="family" type="number" inputmode="numeric"></div>
         <div><label>役職手当</label><input id="position" type="number" inputmode="numeric"></div>
       </div>
 
-      <h3>年間所定労働時間数</h3>
+      <h3>年間所定労働時間</h3>
       <input id="annualHours" type="number" inputmode="numeric" placeholder="例:1708" style="margin-bottom: 12px;">
 
       <button onclick="closeSettings()" style="margin-top: 8px; background: var(--primary);">閉じる</button>
@@ -543,8 +543,8 @@
     function calc() {
       const valueOf = id => document.getElementById(id).value.trim();
       const requiredFields = [
-        { id: "salary", label: "俸給" },
-        { id: "annualHours", label: "年間所定労働時間数" }
+        { id: "salary", label: "基本給" },
+        { id: "annualHours", label: "年間所定労働時間" }
       ];
 
       for (const field of requiredFields) {
@@ -562,8 +562,8 @@
       const position = valueOf("position") === "" ? 0 : Number(valueOf("position"));
       const annual = Number(valueOf("annualHours"));
       const wageFields = [
-        { id: "salary", label: "俸給", value: salary },
-        { id: "skill", label: "勤続・職能", value: skill },
+        { id: "salary", label: "基本給", value: salary },
+        { id: "skill", label: "職能給・勤続給", value: skill },
         { id: "family", label: "扶養手当", value: family },
         { id: "position", label: "役職手当", value: position }
       ];
@@ -577,7 +577,7 @@
       }
 
       if (!Number.isFinite(annual) || annual <= 0) {
-        alert("年間所定労働時間数は0より大きい数値を入力してください。");
+        alert("年間所定労働時間は0より大きい数値を入力してください。");
         openSettings();
         document.getElementById("annualHours").focus();
         return;
