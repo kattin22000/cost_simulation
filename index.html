@@ -298,7 +298,8 @@
       <h3 style="margin-top: 12px;">残業時間</h3>
       <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px;">
         <div><label>割増0%</label><input id="hours0" type="text" readonly placeholder="0.00" onclick="openPicker('hours0')" style="cursor: pointer;"></div>
-        <div><label>割増25%</label><input id="hours25" type="text" readonly placeholder="0.00" onclick="openPicker('hours25')" style="cursor: pointer;"></div>
+        <div><label>割増25%（0.25）</label><input id="hours025" type="text" readonly placeholder="0.00" onclick="openPicker('hours025')" style="cursor: pointer;"></div>
+        <div><label>割増25%（1.25）</label><input id="hours25" type="text" readonly placeholder="0.00" onclick="openPicker('hours25')" style="cursor: pointer;"></div>
         <div><label>割増50%</label><input id="hours50" type="text" readonly placeholder="0.00" onclick="openPicker('hours50')" style="cursor: pointer;"></div>
         <div><label>割増75%</label><input id="hours75" type="text" readonly placeholder="0.00" onclick="openPicker('hours75')" style="cursor: pointer;"></div>
       </div>
@@ -351,7 +352,7 @@
   </div>
 
   <script>
-    const fields = ["salary", "skill", "family", "position", "annualHours", "hours0", "hours25", "hours50", "hours75"];
+    const fields = ["salary", "skill", "family", "position", "annualHours", "hours0", "hours025", "hours25", "hours50", "hours75"];
 
     window.onload = () => {
       // Check if it's the very first launch (e.g. salary is not configured)
@@ -406,13 +407,14 @@
     function calc() {
       const n = id => Number(document.getElementById(id).value) || 0;
       const salary = n("salary"), skill = n("skill"), family = n("family"), position = n("position"), annual = n("annualHours");
-      const h0 = n("hours0"), h25 = n("hours25"), h50 = n("hours50"), h75 = n("hours75");
+      const h0 = n("hours0"), h025 = n("hours025"), h25 = n("hours25"), h50 = n("hours50"), h75 = n("hours75");
       const adjust = (salary + skill + family) * 0.1, base = salary + adjust + skill + position, hourly = annual ? base * 12 / annual : 0;
       const o0 = hourly * h0;
+      const o025 = hourly * h025 * 0.25;
       const o25 = hourly * h25 * 1.25;
       const o50 = hourly * h50 * 1.50;
       const o75 = hourly * h75 * 1.75;
-      const total = o0 + o25 + o50 + o75;
+      const total = o0 + o025 + o25 + o50 + o75;
 
       document.getElementById('result-total').innerText = `総残業手当 ${Math.round(total).toLocaleString()} 円`;
       document.getElementById('result-details').innerHTML = `
@@ -421,7 +423,8 @@
 <tr><td>基礎賃金</td><td>${Math.round(base).toLocaleString()} 円</td></tr>
 <tr><td>時給</td><td>${hourly.toFixed(2)} 円</td></tr>
 <tr><td>割増0%</td><td>${Math.round(o0).toLocaleString()} 円</td></tr>
-<tr><td>割増25%</td><td>${Math.round(o25).toLocaleString()} 円</td></tr>
+<tr><td>割増25%（0.25）</td><td>${Math.round(o025).toLocaleString()} 円</td></tr>
+<tr><td>割増25%（1.25）</td><td>${Math.round(o25).toLocaleString()} 円</td></tr>
 <tr><td>割増50%</td><td>${Math.round(o50).toLocaleString()} 円</td></tr>
 <tr><td>割増75%</td><td>${Math.round(o75).toLocaleString()} 円</td></tr></table>`;
 
@@ -465,7 +468,8 @@
       const val = Number(document.getElementById(fieldId).value) || 0;
       const labels = {
         "hours0": "割増0% 時間",
-        "hours25": "割増25% 時間",
+        "hours025": "割増25%（0.25）時間",
+        "hours25": "割増25%（1.25）時間",
         "hours50": "割増50% 時間",
         "hours75": "割増75% 時間"
       };
